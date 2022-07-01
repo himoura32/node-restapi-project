@@ -4,21 +4,22 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const graphqlHttp = require('express-graphql').graphqlHTTP;
 
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 
 const app = express();
 
 const fileStorage = multer.diskStorage({
-    destination: './images/',
-    filename: function (req, file, cb) {
-      cb(
-        null,
-        new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname
-      );
-    },
-  });
+  destination: './images/',
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname
+    );
+  },
+});
 
 const fileFilter = (req, file, cb) => {
   if (
@@ -48,8 +49,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(
+  '/graphql',
+  graphqlHttp({
+    schema: graphqlSchema,
+    rootValue: graphqlResolver,
+    graphiql: true,
+  })
+);
 
 app.use((error, req, res, next) => {
   console.log(error);
